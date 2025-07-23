@@ -5,18 +5,26 @@ import path from "path";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Aqui está fazendo a leitura do arquivo CSV
+  // 🔄 Limpa todas as tabelas
+  await prisma.recarga.deleteMany({});
+  await prisma.operador.deleteMany({});
+  await prisma.eletroposto.deleteMany({});
+  await prisma.veiculo.deleteMany({});
+
+  // 📂 Lê o arquivo CSV
   const filePath = path.join(__dirname, "../base_inicial.csv");
   const content = fs.readFileSync(filePath, "utf-8");
 
-  // Aqui está fazendo um corte por linha (removendo a primeira linha que é o cabeçalho)
+  // Remove cabeçalho e divide em linhas
   const linhas = content.split("\n").slice(1);
+
   for (const [index, linha] of linhas.entries()) {
     if (!linha.trim()) continue;
 
     try {
-      // Aqui está fazendo a separação de cada campo pelo ; pq vem em um arquivo CSV
+      // Separa os campos pelo ;
       const [
+        empresa,
         data,
         veiculoId,
         eletropostoNome,
@@ -29,7 +37,7 @@ async function main() {
         kmFinalRaw,
         operadorNome,
         status,
-      ] = linha.split(";");
+      ] = linha.split(";").map((item) => item.trim());
 
       // Aqui vai criar as entidades relacionadas (Operador, Eletroposto, Veiculo e Recarga)
       const operador = await prisma.operador.upsert({
@@ -50,7 +58,7 @@ async function main() {
         create: { identificador: veiculoId },
       });
 
-      // Aqui vai converter os números que vem com vírgulas e passa para números que valem no JS
+      // Converte campos numéricos
       const kwh = parseFloat(kwhRaw.replace(",", "."));
       const kmInicial = parseFloat(kmInicialRaw.replace(",", "."));
       const kmFinal = parseFloat(kmFinalRaw.replace(",", "."));
@@ -71,20 +79,18 @@ async function main() {
           veiculoId: veiculo.id,
         },
       });
-
-      console.log("olá mundo");
     } catch (error) {
       console.error(`Erro na linha ${index + 2}:`, linha);
       console.error(error);
     }
   }
 
-  console.log("Dados importados com sucesso!");
+  console.log("Importação concluída com sucesso!");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("Erro geral:", e);
     process.exit(1);
   })
   .finally(async () => {

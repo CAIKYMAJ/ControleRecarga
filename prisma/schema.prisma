@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Operador {
+  id       Int       @id @default(autoincrement())
+  nome     String    @unique
+  recargas Recarga[]
+}
+
+model Veiculo {
+  id       Int       @id @default(autoincrement())
+  identificador String @unique
+  recargas  Recarga[]
+}
+
+model Eletroposto {
+  id       Int       @id @default(autoincrement())
+  nome     String    @unique
+  recargas Recarga[]
+}
+
+model Recarga {
+  id                Int       @id @default(autoincrement())
+  data              DateTime
+  inicio            DateTime
+  fim               DateTime?
+  percentual_inicio Int
+  percentual_final  Int
+  kwh               Float
+  km_inicial        Float?
+  km_final          Float?
+  status            String
+
+  veiculo     Veiculo   @relation(fields: [veiculoId], references: [id])
+  veiculoId   Int
+  operador    Operador  @relation(fields: [operadorId], references: [id])
+  operadorId  Int
+  eletroposto Eletroposto @relation(fields: [eletropostoId], references: [id])
+  eletropostoId Int
+}
